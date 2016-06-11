@@ -7,7 +7,29 @@ Find English words in the digits of Pi.
 ##### Midi piano :heavy_check_mark:
 Implement a simple midi keyboard - play notes, change instruments, change octaves and record/play recording.
 
-##### Calculator parser
+##### Calculator parser :heavy_check_mark:
+Implement a calculator parser.  
+1) Define a grammar:  
+ Symbols:  
+ ```
+ +, -, *, /  
+ scalar, in (inches), pt (point)  
+ ( )  
+ ```
+    
+ Grammar: 
+ ```
+ calculator ::= (regular | parenthesised)+  
+ parenthesised = OPEN_P (regular | parenthesised)+ CLOSE_P  
+ regular ::= (unit operator unit)+  
+ unit ::= scalar | IN | PT  
+ operator ::= PLUS | MINUS | MUL | DIV  
+ scalar ::= [\d]  
+ ```
+ 2) Implement the lexer to tokenize the input.  
+ 3) Implement the parser to evaluate the expressions.  
+ 4) Put it all together.  
+
 
 ##### Building a Sudoku solver with SAT 
 
