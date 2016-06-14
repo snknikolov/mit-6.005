@@ -31,7 +31,8 @@ Implement a calculator parser.
  4) Put it all together.  
 
 
-##### Building a Sudoku solver with SAT 
+##### Build a Sudoku solver with SAT :heavy_check_mark:
+Implement the DPLL algorithm and use it to solve sudoku puzzles.
 
 ##### Finding prime factors with networking
 

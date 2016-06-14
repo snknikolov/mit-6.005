@@ -1,10 +1,15 @@
 package sudoku.src.sat;
 
+import sudoku.src.immutable.EmptyImList;
 import sudoku.src.immutable.ImList;
+import sudoku.src.sat.env.Bool;
 import sudoku.src.sat.env.Environment;
+import sudoku.src.sat.env.Variable;
 import sudoku.src.sat.formula.Clause;
 import sudoku.src.sat.formula.Formula;
 import sudoku.src.sat.formula.Literal;
+import sudoku.src.sat.formula.NegLiteral;
+import sudoku.src.sat.formula.PosLiteral;
 
 /**
  * A simple DPLL SAT solver. See http://en.wikipedia.org/wiki/DPLL_algorithm
@@ -20,8 +25,7 @@ public class SATSolver {
      *         null if no such environment exists.
      */
     public static Environment solve(Formula formula) {
-        // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        return solve(formula.getClauses(), new Environment());
     }
 
     /**
@@ -37,8 +41,35 @@ public class SATSolver {
      *         or null if no such environment exists.
      */
     private static Environment solve(ImList<Clause> clauses, Environment env) {
-        // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        if (clauses.isEmpty())
+            return env;
+        
+        Clause min = null;
+        for (Clause c : clauses) {
+            if (c.isEmpty())
+                return null;
+            if (min == null || c.size() < min.size())
+                min = c;
+        }
+        Literal l = min.chooseLiteral();
+        Variable v = l.getVariable();
+        
+        if (min.isUnit()) {
+            Bool b = Bool.UNDEFINED;
+            if (l instanceof PosLiteral)
+                b = Bool.TRUE;
+            else
+                b = Bool.FALSE;
+            env = env.put(v, b);
+            return solve(substitute(clauses, l), env);
+        }
+        if (l instanceof NegLiteral)
+            l = l.getNegation();
+        Environment solveEnv = solve(substitute(clauses, l), env.put(v, Bool.TRUE));
+        if (solveEnv == null)
+            return solve(substitute(clauses, l.getNegation()), env.put(v, Bool.FALSE));
+        
+        return solveEnv;
     }
 
     /**
@@ -53,8 +84,12 @@ public class SATSolver {
      */
     private static ImList<Clause> substitute(ImList<Clause> clauses,
             Literal l) {
-        // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        ImList<Clause> substituted = new EmptyImList<Clause>();
+        for (Clause c : clauses) {
+            Clause cl = c.reduce(l);
+            if (cl != null)
+                substituted = substituted.add(cl);
+        }
+        return substituted;
     }
-
 }

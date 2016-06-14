@@ -9,26 +9,26 @@ package sudoku.src.sudoku;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
 
+import sudoku.src.sat.env.Bool;
 import sudoku.src.sat.env.Environment;
 import sudoku.src.sat.env.Variable;
+import sudoku.src.sat.formula.Clause;
 import sudoku.src.sat.formula.Formula;
+import sudoku.src.sat.formula.NegLiteral;
+import sudoku.src.sat.formula.PosLiteral;
 
 /**
  * Sudoku is an immutable abstract datatype representing instances of Sudoku.
  * Each object is a partially completed Sudoku puzzle.
  */
 public class Sudoku {
-    // The boundary values for internal sudoku squares representation.
-    private static final int NOT_PRESENT = 0;
-    private static final int MAX_SQUARE_VALUE = 9;
-    private static final int DEFAULT_DIM = 3;
+    // The value of a missing sudoku square.
+    private static final int NOT_PRESENT = -1;
     
-    // dimension: standard puzzle has dim 3
     private final int dim;
-    // number of rows and columns: standard puzzle has size 9
     private final int size;
+    
     // known values: square[i][j] represents the square in the ith row and jth
     // column,
     // contains -1 if the digit is not present, else i>=0 to represent the digit
@@ -53,7 +53,6 @@ public class Sudoku {
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 assert square[i][j] >= NOT_PRESENT;
-                assert square[i][j] <= MAX_SQUARE_VALUE;
             }
         }
     }
@@ -66,20 +65,7 @@ public class Sudoku {
      *            makes a standard Sudoku puzzle with a 9x9 grid.
      */
     public Sudoku(int dim) {
-        if (dim <= 0)
-            throw new IllegalArgumentException("Positive dimension required.");
-        this.square = new int[dim][dim];
-        this.dim = dim;
-        this.size = dim * dim;
-        this.occupies = null; // TODO Implement that later
-        
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                square[i][j] = NOT_PRESENT;
-            }
-        }
-        
-        checkRep();
+        this(dim, new int[dim*dim][dim*dim]);
     }
 
     /**
@@ -102,17 +88,23 @@ public class Sudoku {
      *            square[i].length for 0<=i<dim.
      */
     public Sudoku(int dim, int[][] square) {
-        if (dim <= 0)
-            throw new IllegalArgumentException("Positive dimension required.");
+        assert dim > 0;
+        assert dim * dim == square.length;
         
         this.dim = dim;
         this.size = dim * dim;
-        this.square = new int[this.size][this.size];
-        this.occupies = null; // TODO Implement later.
+        this.square = new int[size][size];
+        this.occupies = new Variable[size][size][size];
         
-        for (int i = 0; i < square.length; i++)
-            this.square[i] = Arrays.copyOf(square[i], square[i].length);
-        
+        for (int row = 0; row < size; row++) {
+            assert square[row].length == dim * dim;
+            for (int col = 0; col < size; col++) {
+                this.square[row][col] = square[row][col] - 1;
+                for (int k = 0; k < size; k++) 
+                    this.occupies[row][col][k] = new Variable(String.format("%d%d%d", row, col, k));
+            }
+        }
+        checkRep();
     }
 
     /**
@@ -135,11 +127,8 @@ public class Sudoku {
      */
     public static Sudoku fromFile(int dim, String filename) throws IOException,
             ParseException {
-        if (dim > DEFAULT_DIM || dim <= 0)
-            throw new ParseException("Illegal dimension value " + dim);
-        
-        int size = dim * dim;
-        int[][] square = new int[size][size];
+        assert dim > 0;
+        Sudoku sud = new Sudoku(dim);
         
         BufferedReader br = new BufferedReader(new FileReader(filename));
         try {
@@ -147,17 +136,15 @@ public class Sudoku {
             int row = 0;
             
             while (line != null) {
-                assert line.length() == size : "Number of columns in file inconsistent with size";
+                assert line.length() == sud.size : "Number of columns in file inconsistent with size";
                 
                 for (int col = 0; col < line.length(); col++) {
                     if (line.charAt(col) == '.')
-                        square[row][col] = NOT_PRESENT;
+                        sud.square[row][col] = NOT_PRESENT;
                     else {
                         try {
-                            int colValue = Integer.parseInt(line.substring(col, col+1));
-                            
-                            assert colValue > NOT_PRESENT && colValue <= MAX_SQUARE_VALUE;
-                            square[row][col] = colValue;
+                            int colValue = Integer.parseInt(line.substring(col, col+1));                            
+                            sud.square[row][col] = colValue - 1;
                         } catch (NumberFormatException nfe) {
                             throw new ParseException("Expected integer, found " + line.substring(col,col+1));
                         }
@@ -166,13 +153,12 @@ public class Sudoku {
                 line = br.readLine();
                 ++row;
             }
-            assert row == size : "Number of rows in file inconsistent with size.";
+            assert row == sud.size : "Number of rows in file inconsistent with size.";
             
         } finally {
             br.close();
         }
-        
-        return new Sudoku(dim, square);
+        return sud;
     }
 
     /**
@@ -198,17 +184,23 @@ public class Sudoku {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         
-        for (int row = 0; row < this.size; row++) {
-            for (int col = 0; col < this.size; col++) {
+        for (int row = 0; row < size; row++) {
+            for (int col = 0; col < size; col++) {
                 int current = square[row][col];
                 if (current == NOT_PRESENT)
                     sb.append('.');
                 else
-                    sb.append(current);
+                    sb.append(current + 1);
+                if ((col+1) % dim == 0)
+                    sb.append("|");
+            }
+            if ((row+1) % dim == 0) {
+                sb.append("\n");
+                for (int col = 0; col < size; col++)
+                    sb.append("-"); 
             }
             sb.append("\n");
         }
-        
         return sb.toString();
     }
 
@@ -218,9 +210,37 @@ public class Sudoku {
      *         occupies the entry in row i, column j
      */
     public Formula getProblem() {
+        Formula initial = new Formula();
+        
+        // Only one digit per square.
+        // A digit can appear exactly once per row and exactly once per column.
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                Clause atLeastOncePerRow = new Clause();
+                Clause atLeastOncePerCol = new Clause();
 
-        // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+                if (square[i][j] != NOT_PRESENT)
+                    initial = initial.and(new Formula(occupies[i][j][square[i][j]]));
+                
+                for (int k = 0; k < size; k++) {
+                    Clause oneDigitPerSquare = new Clause(NegLiteral.make(occupies[i][j][k]));
+                    Clause atMostOncePerRow = new Clause(NegLiteral.make(occupies[i][k][j]));
+                    Clause atMostOncePerCol = new Clause(NegLiteral.make(occupies[k][i][j]));
+                    atLeastOncePerRow = atLeastOncePerRow.add(PosLiteral.make(occupies[i][k][j]));
+                    atLeastOncePerCol = atLeastOncePerCol.add(PosLiteral.make(occupies[k][i][j]));
+                    
+                    for (int prime = k+1; prime < size; prime++) {
+                        initial = initial.addClause(oneDigitPerSquare.add(NegLiteral.make(occupies[i][j][prime])));
+                        initial = initial.addClause(atMostOncePerRow.add(NegLiteral.make(occupies[i][prime][j])));
+                        initial = initial.addClause(atMostOncePerCol.add(NegLiteral.make(occupies[prime][i][j])));
+                    }
+                }
+                initial = initial.addClause(atLeastOncePerRow);
+                initial = initial.addClause(atLeastOncePerCol);
+            }            
+        }
+                
+        return initial;
     }
 
     /**
@@ -233,18 +253,14 @@ public class Sudoku {
      *         blank entries.
      */
     public Sudoku interpretSolution(Environment e) {
+        Sudoku sud = new Sudoku(dim);
 
-        // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
-    }
-
-    public static void main(String[] args) {
-        String fileName = "src/sudoku/samples/sudoku_easy.txt";
-        int dim = 3;
-        try {
-            Sudoku sudoku = Sudoku.fromFile(dim, fileName);
-            System.out.println(sudoku);
-        } catch (Exception e) {e.printStackTrace();}
-
-    }
+        for (int i = 0; i < size; i++)
+            for (int j = 0; j < size; j++)
+                for (int k = 0; k < size; k++)
+                    if (this.occupies[i][j][k].eval(e) == Bool.TRUE)
+                        sud.square[i][j] = k;
+        
+        return sud;
+    }    
 }

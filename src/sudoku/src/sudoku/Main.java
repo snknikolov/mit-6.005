@@ -9,20 +9,16 @@ import sudoku.src.sudoku.Sudoku.ParseException;
 
 public class Main {
 
-
-    /*
-     * Uncomment line(s) below to test your implementation! 
-     */
     public static void main (String[] args) {
         timedSolve (new Sudoku(2));
-//        timedSolve (new Sudoku(2, new int[][] { 
-//                    new int[] { 0, 1, 0, 4 }, 
-//                    new int[] { 0, 0, 0, 0 }, 
-//                    new int[] { 2, 0, 3, 0 }, 
-//                    new int[] { 0, 0, 0, 0 }, 
-//        }));
-//        timedSolveFromFile(3, "samples/sudoku_easy.txt");
-//        timedSolveFromFile(3, "samples/sudoku_hard.txt");        
+        timedSolve (new Sudoku(2, new int[][] { 
+                    new int[] { 0, 1, 0, 4 }, 
+                    new int[] { 0, 0, 0, 0 }, 
+                    new int[] { 2, 0, 3, 0 }, 
+                    new int[] { 0, 0, 0, 0 }, 
+        }));
+        timedSolveFromFile(3, "src/sudoku/samples/sudoku_ultimate.txt");
+        timedSolveFromFile(3, "src/sudoku/samples/sudoku_hard.txt");        
     }
 
     /**

@@ -6,7 +6,9 @@
  */
 package sudoku.src.sat.formula;
 
+import sudoku.src.immutable.EmptyImList;
 import sudoku.src.immutable.ImList;
+import sudoku.src.immutable.NonEmptyImList;
 
 import java.util.Iterator;
 
@@ -34,6 +36,12 @@ public class Formula {
     //        
     //        For example, if the list contains the two clauses (a,b) and (!c,d), then the
     //        corresponding formula is (a or b) and (!c or d).
+    //
+    // Datatype definition:
+    //      Formula = ImList<Clause> a list of clauses ANDed together
+    //      Clause = ImList<Literal> a list of literals ORed together
+    //      Literal = PosLiteral(v: Variable) + NegLiteral(v: Variable) either a variable P or its negation ~P
+    //      Variable = String
 
     void checkRep() {
         assert this.clauses != null : "SATProblem, Rep invariant: clauses non-null";
@@ -46,9 +54,7 @@ public class Formula {
      * @return the true problem
      */
     public Formula() {
-
-        // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        this.clauses = new EmptyImList<Clause>();
     }
 
     /**
@@ -58,8 +64,10 @@ public class Formula {
      * @return the problem with a single clause containing the literal l
      */
     public Formula(Variable l) {
-        // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        Literal literal = PosLiteral.make(l);
+        Clause c = new Clause(literal);
+        ImList<Clause> cl = new NonEmptyImList<Clause>(c);
+        this.clauses = cl;
     }
 
     /**
@@ -68,8 +76,17 @@ public class Formula {
      * @return the problem with a single clause c
      */
     public Formula(Clause c) {
-        // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        ImList<Clause> clauses = new NonEmptyImList<Clause>(c);
+        this.clauses = clauses;
+    }
+    
+    /**
+     * Create a new problem for solving that contains a list of clauses.
+     * 
+     * @param clauses The list of clauses.
+     */
+    private Formula(ImList<Clause> clauses) {
+        this.clauses = clauses;
     }
 
     /**
@@ -78,8 +95,8 @@ public class Formula {
      * @return a new problem with the clauses of this, but c added
      */
     public Formula addClause(Clause c) {
-        // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        ImList<Clause> consClause = this.clauses.add(c);
+        return new Formula(consClause);
     }
 
     /**
@@ -88,8 +105,7 @@ public class Formula {
      * @return list of clauses
      */
     public ImList<Clause> getClauses() {
-        // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        return clauses;
     }
 
     /**
@@ -99,34 +115,55 @@ public class Formula {
      *         order
      */
     public Iterator<Clause> iterator() {
-        // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        return clauses.iterator();
     }
 
     /**
      * @return a new problem corresponding to the conjunction of this and p
      */
     public Formula and(Formula p) {
-        // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        ImList<Clause> fullClauseList = this.clauses;
+        for (Clause c : p.getClauses())
+            fullClauseList = fullClauseList.add(c);
+        
+        return new Formula(fullClauseList);
     }
 
     /**
      * @return a new problem corresponding to the disjunction of this and p
      */
-    public Formula or(Formula p) {
-        // TODO: implement this.
-        // Hint: you'll need to use the distributive law to preserve conjunctive normal form, i.e.:
-        //   to do (a & b) .or (c & d),
-        //   you'll need to make (a | b) & (a | c) & (b | c) & (b | d)        
-        throw new RuntimeException("not yet implemented.");
+    public Formula or(Formula other) {
+        // (a & b) .or (c & d) == (a | c) & (a | d) & (b | c) & (b | d)
+        if (other.clauses.size() == 0)
+            return this;
+        if (this.clauses.size() == 0)
+            return other;
+        
+        ImList<Clause> fullClauseList = new EmptyImList<Clause>();
+        
+        // Extract each literal from each clause of this and combine with every
+        // literal from every clause of other.
+        for (Clause thisClause : this.clauses) {
+            for (Iterator<Literal> thisIter = thisClause.iterator(); thisIter.hasNext();) {
+                Literal thisLiteral = thisIter.next();
+                Clause initialClause = new Clause(thisLiteral);
+            
+                for (Clause otherClause : other.getClauses()) {
+                    for (Iterator<Literal> otherIter = otherClause.iterator(); otherIter.hasNext();) {
+                        Literal thatLiteral = otherIter.next();
+                        Clause pairClause = initialClause.add(thatLiteral);
+                        fullClauseList = fullClauseList.add(pairClause);
+                    }
+                }
+            }
+        }
+        return new Formula(fullClauseList);        
     }
 
     /**
      * @return a new problem corresponding to the negation of this
      */
     public Formula not() {
-        // TODO: implement this.
         // Hint: you'll need to apply DeMorgan's Laws (http://en.wikipedia.org/wiki/De_Morgan's_laws)
         // to move the negation down to the literals, and the distributive law to preserve 
         // conjunctive normal form, i.e.:
@@ -134,16 +171,25 @@ public class Formula {
         //   you'll need to make !((a | b) & c) 
         //                       => (!a & !b) | !c            (moving negation down to the literals)
         //                       => (!a | !c) & (!b | !c)    (conjunctive normal form)
-        throw new RuntimeException("not yet implemented.");
+                
+        Formula result = new Formula();
+        for (Clause c: clauses){
+            Clause neg = new Clause();
+            for(Literal l: c){
+                neg = neg.add(l.getNegation());
+            }
+            
+            result = result.or(new Formula(neg));
+        }
+        return result;
     }
-
+    
     /**
      * 
      * @return number of clauses in this
      */
     public int getSize() {
-        // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        return clauses.size();
     }
 
     /**
