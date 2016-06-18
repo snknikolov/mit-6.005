@@ -47,6 +47,14 @@ public class BigMath {
         
         List<BigInteger> primeFactors = new LinkedList<BigInteger>();
         
+        // If lo == 1, add 1 to avoid infinite delete by 1.
+        if (lo.equals(BigInteger.ONE))
+            lo = lo.add(BigInteger.ONE);
+        // If low is not prime, go straight to the next prime.
+        else if (!lo.isProbablePrime(10))
+            lo = lo.nextProbablePrime();
+        
+        
         // Make a copy of the original to be divided inside the loop.
         BigInteger N = new BigInteger(n.toString());
         for (BigInteger x = lo; x.compareTo(hi) <= 0; x = x.nextProbablePrime()) {
@@ -60,5 +68,11 @@ public class BigMath {
             }
         }
         return primeFactors;
+    }
+    
+    public static void main(String[] args) {
+        List<BigInteger> bi = findAllPrimeFactors(new BigInteger("12"), new BigInteger("6"), new BigInteger("8"));
+        for (BigInteger b : bi) 
+            System.out.println(b);
     }
 }
