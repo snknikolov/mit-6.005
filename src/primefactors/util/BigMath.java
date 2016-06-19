@@ -32,10 +32,11 @@ public class BigMath {
     }
     
     /**
+     * Find all prime factors of a number N.
      * 
      * @param n BigInteger N such that 2 <= N
      * @param lo, hi such that 1 <= low <= hi
-     * @return all prime BigIntegers x such that
+     * @return List of all prime BigIntegers x such that
      *         low <= x <= hi AND x divides N evenly.
      *         Repeated factors will be found multiple times.
      */
@@ -54,25 +55,18 @@ public class BigMath {
         else if (!lo.isProbablePrime(10))
             lo = lo.nextProbablePrime();
         
-        
-        // Make a copy of the original to be divided inside the loop.
-        BigInteger N = new BigInteger(n.toString());
         for (BigInteger x = lo; x.compareTo(hi) <= 0; x = x.nextProbablePrime()) {
             if (n.remainder(x).compareTo(BigInteger.ZERO) == 0) {
-                while (N.remainder(x).compareTo(BigInteger.ZERO) == 0) {
+                while (n.remainder(x).compareTo(BigInteger.ZERO) == 0) {
                     primeFactors.add(x);
-                    N = N.divide(x);
+                    n = n.divide(x);
                 }
-                // Restore the original value of N.
-                N = n;
             }
         }
+        
+        if (!n.equals(BigInteger.ONE))
+            primeFactors.add(n);
+        
         return primeFactors;
-    }
-    
-    public static void main(String[] args) {
-        List<BigInteger> bi = findAllPrimeFactors(new BigInteger("12"), new BigInteger("6"), new BigInteger("8"));
-        for (BigInteger b : bi) 
-            System.out.println(b);
     }
 }
