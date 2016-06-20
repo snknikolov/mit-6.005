@@ -64,7 +64,8 @@ public class BigMath {
             }
         }
         
-        if (!n.equals(BigInteger.ONE))
+        if (!n.equals(BigInteger.ONE) 
+                && n.isProbablePrime(10))
             primeFactors.add(n);
         
         return primeFactors;

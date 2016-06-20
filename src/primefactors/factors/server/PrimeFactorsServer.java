@@ -78,7 +78,7 @@ public class PrimeFactorsServer {
      * @throws IOException
      */
     public void serve() throws IOException {
-//        while (true) {
+        while (true) {
             Socket socket = serverSocket.accept();
             
             try { 
@@ -88,7 +88,7 @@ public class PrimeFactorsServer {
             } finally {
                 socket.close();
             }
-//        }
+        }
     }
     
     /**
@@ -142,7 +142,7 @@ public class PrimeFactorsServer {
      * @param message The clients message.
      * @return True if a client's message is valid, false otherwise.
      */
-    private static boolean isValidMessage(String message) {
+    private boolean isValidMessage(String message) {
         String[] tokens = message.split(" ");
         
         // Number of tokens in a message should be 4 and should start with factor.
@@ -169,47 +169,6 @@ public class PrimeFactorsServer {
      *            Defaults to port 4444 if no Program argument is present.
      */
     public static void main(String[] args) {
-//        int portNumber = DEFAULT_PORT;
-//        if (args.length > 1) {
-//            System.err.println("Usage: java EchoServer <port number>?");
-//            System.exit(1);
-//        } else if (args.length == 1) {
-//            portNumber = Integer.parseInt(args[0]);
-//        }
-//
-//        try (ServerSocket serverSocket = new ServerSocket(portNumber);
-//                Socket clientSocket = serverSocket.accept();
-//                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-//                BufferedReader in = new BufferedReader(
-//                        new InputStreamReader(clientSocket.getInputStream()));
-//                ) {
-//            String inputLine;
-//            
-//            out.println();
-//            while ((inputLine = in.readLine()) != null) {
-//                if (inputLine.equals("bb"))
-//                    break;
-//                
-//                if (!isValidMessage(inputLine)) {
-//                    out.println(INVALID);
-//                } else {
-//                    String[] tokens = inputLine.split(" ");
-//                    BigInteger n = new BigInteger(tokens[1]);
-//                    BigInteger lo = new BigInteger(tokens[2]);
-//                    BigInteger hi = new BigInteger(tokens[3]);
-//                    List<BigInteger> found = BigMath.findAllPrimeFactors(n, lo, hi);
-//                    
-//                    for (BigInteger bi : found)
-//                        out.println(String.format("found %s %s", n.toString(), bi.toString()));
-//                    out.println(String.format("done %s %s %s", tokens[1], tokens[2], tokens[3]));
-//                }
-//            }
-//            
-//        } catch (IOException e) {
-//            System.out.println("Exception caught when trying to listen on port " + portNumber
-//                    + " or listening for a connection");
-//            System.out.println(e.getMessage());
-//        }
         
       int port = DEFAULT_PORT;
       if (args.length > 1) {
@@ -218,6 +177,7 @@ public class PrimeFactorsServer {
       } else if (args.length == 1) {
           port = Integer.parseInt(args[0]);
       }
+      
       try {
           PrimeFactorsServer server = new PrimeFactorsServer(port);
           server.serve();

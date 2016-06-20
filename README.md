@@ -34,7 +34,8 @@ Implement a calculator parser.
 ##### Build a Sudoku solver with SAT :heavy_check_mark:
 Implement the DPLL algorithm and use it to solve sudoku puzzles.
 
-##### Finding prime factors with networking
+##### Finding prime factors with networking :heavy_check_mark:
+Make a server to do prime factor searching. Create a client that makes requests to servers it is connected to. The client's connected servers must perform its operations concurrently.
 
 ##### Multiplayer minesweeper
 
