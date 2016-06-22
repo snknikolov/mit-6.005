@@ -1,5 +1,10 @@
 package minesweeper;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+
 public final class Board {
     private static final int DEFAULT_BOARD_SIZE = 10;
     private static final double IS_BOMB_PROBABILITY = 0.25;
@@ -14,43 +19,49 @@ public final class Board {
     
     /**
      * Get a board instance.
-     * @param args
+     * @param args The arguments 
      * @return
      */
     public static Board getBoard(String... args) {
         if (args.length == 1) {
-            return new Board(DEFAULT_BOARD_SIZE);
+                        return new Board(DEFAULT_BOARD_SIZE);
         } else if (args[1].equals("-s")) {
-            int size;
-            try {
-                size = Integer.parseInt(args[2]);
-            } catch (NumberFormatException nfe) {
-                nfe.printStackTrace();
-                throw new IllegalArgumentException("Usage: <DEBUG> -s <size>.");
-            }
+            // -s is "size" flag. 3rd argument should be an integer.
+            int size = Integer.parseInt(args[2]);
             return new Board(size);
         } else if (args[1].equals("-f")) {
-            return null;
+            // -f is "file" flag. 3rd argument should be path to file.
+            int[][] board = fileToBoard(args[2]);
+            return new Board(board);
         } else {
-            return null;
+            throw new IllegalArgumentException("Can't recognise args pattern.");
         }
     }
     
     /**
-     * Make a board with dimensions size*size
+     * Make a board with dimensions size*size from a randomly
+     * generated int[][] board.
+     * 
      * @param size The size of the board's length and width.
      */
     private Board(int size) {
-        int[][] initBoard = constructBoard(size);
+        this(constructBoard(size));
+    }
+    
+    /**
+     * Make a board from int[][].
+     * @param board
+     */
+    private Board(int[][] board) {
+        int size = board.length;
         this.board = new Square[size][size];
-        
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
-                int numBombNeighbours = countBombNeighbours(i, j, initBoard);
-                if (initBoard[i][j] == NO_BOMB_FLAG) {
-                    board[i][j] = new Square(false, numBombNeighbours);
+                int numBombNeighbours = countBombNeighbours(i, j, board);
+                if (board[i][j] == NO_BOMB_FLAG) {
+                    this.board[i][j] = new Square(false, numBombNeighbours);
                 } else {
-                    board[i][j] = new Square(true, numBombNeighbours);
+                    this.board[i][j] = new Square(true, numBombNeighbours);
                 }
             }
         }
@@ -142,27 +153,7 @@ public final class Board {
         }
         return sb.toString();
     }
-    
-    
-    /**
-     * Initialise an N x N minesweeper board.
-     * 
-     * @param size The length/width of the board.
-     * @return int[][] representation of a minesweeper board.
-     */
-    private int[][] constructBoard(int size) {
-        int[][] board = new int[size][size];
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (Math.random() <= IS_BOMB_PROBABILITY)
-                    board[i][j] = BOMB_FLAG;
-                else
-                    board[i][j] = NO_BOMB_FLAG;
-            }
-        }
-        return board;
-    }
-    
+        
     /**
      * Count the number of bomb neighbours around a square in row i, column j.
      * 
@@ -204,4 +195,61 @@ public final class Board {
         }
         return numBombNeighbours;
     }    
+    
+    /**
+     * Initialise an N x N minesweeper board.
+     * 
+     * @param size The length/width of the board.
+     * @return int[][] representation of a minesweeper board.
+     */
+    private static int[][] constructBoard(int size) {
+        int[][] board = new int[size][size];
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (Math.random() <= IS_BOMB_PROBABILITY)
+                    board[i][j] = BOMB_FLAG;
+                else
+                    board[i][j] = NO_BOMB_FLAG;
+            }
+        }
+        return board;
+    }
+    
+    /**
+     * Convert a text file to int[][] board.
+     * 
+     * @param filePath The path to file.
+     * @return int[][] representation of a board,
+     *         null if the file could not be converted.
+     * @throws FileNotFoundException 
+     */
+    private static int[][] fileToBoard(String filePath) {
+        try ( BufferedReader br = new BufferedReader(
+                        new FileReader(filePath));
+        ) {
+            String line = br.readLine();
+            int size = line.length();
+            int[][] board = new int[size][size];
+            int i = 0;
+            while (line != null) {
+                // File contains illegal character or has invalid shape.
+                if (!line.matches("[0-1]+") || line.length() != size)
+                    throw new IllegalArgumentException("File doesn't fulfill board requirements.");
+                
+                for (int j = 0; j < size; j++)
+                    board[i][j] = Character.getNumericValue(line.charAt(j));
+                ++i;
+                line = br.readLine();
+            }
+            if (i != size)
+                throw new IllegalArgumentException("Invalid board size.");
+            return board;
+        } catch (FileNotFoundException fnfe) {
+            fnfe.printStackTrace();
+            return null;
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+            return null;
+        }
+    }
 }

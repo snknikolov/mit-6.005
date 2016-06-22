@@ -1,8 +1,6 @@
 package minesweeper.server;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -49,10 +47,16 @@ import minesweeper.Board;
 public class MinesweeperServer {
     // Default port
 	private final static int PORT = 4444;
+	
 	// Server to user Strings
 	private static final String BYE = "And a very good day to you too, sir!";
 	private static final String BOOM = "BOOM";
-	private static final String HELP = "help";
+	private static final String HELP = "Commands:\n"
+	        + "look -> look at current board\n"
+	        + "bye -> quit game\n"
+	        + "dig x y -> dig square at column x, row y\n"
+	        + "flag x y -> flag square at column x, row y\n"
+	        + "deflag x y -> remove flag from square at column x, row y";
 	
 	// Board instance used by MinesweeperServer
 	private static Board board;
@@ -174,42 +178,6 @@ public class MinesweeperServer {
 		}
 	}
 	
-	/**
-	 * Convert a text file to int[][] board.
-	 * 
-	 * @param filePath
-	 * @return int[][] representation of a board,
-	 *         null if the file could not be converted.
-	 */
-	private static int[][] fileToBoard(String fileName) {
-	    try (
-	            BufferedReader br = new BufferedReader(
-	                    new FileReader(fileName));
-	    ) {
-	        String line = br.readLine();
-	        int size = line.length();
-	        int[][] board = new int[size][size];
-	        int i = 0;
-	        while (line != null) {
-	            // File contains illegal character or has invalid shape.
-	            if (!line.matches("\\d+") || line.length() != size)
-	                return null;
-	            
-	            for (int j = 0; j < size; j++)
-	                board[i][j] = line.charAt(j);
-	            ++i;
-	            line = br.readLine();
-	        }
-	        return board;
-	    } catch (FileNotFoundException fnfe) {
-	        fnfe.printStackTrace();
-	        return null;
-	    } catch (IOException ioe) {
-	        ioe.printStackTrace();
-	        return null;
-	    }
-	}
-    
     /**
      * Start a MinesweeperServer running on the default port.
      * 
@@ -229,6 +197,24 @@ public class MinesweeperServer {
     public static void main(String[] args) {
         try {
             MinesweeperServer server = new MinesweeperServer(PORT);
+            debug = args[0].equals("true");
+            board = Board.getBoard(args);
+            server.serve();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Make a new MinesweeperServer that listens on port.
+     * Used for testing multiple servers. 
+     * 
+     * @param args
+     * @param port The port MinesweeperServer listens on.
+     */
+    public static void test(String[] args, int port) {
+        try {
+            MinesweeperServer server = new MinesweeperServer(port);
             debug = args[0].equals("true");
             board = Board.getBoard(args);
             server.serve();

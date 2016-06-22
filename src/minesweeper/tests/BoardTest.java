@@ -133,6 +133,34 @@ public class BoardTest {
         assertExpectedBoardState(board, expectedState);
     }
     
+    @Test
+    public void fromFile() {
+        String[] args = { "true", "-f", "src/minesweeper/boards/board1.txt" };
+        @SuppressWarnings("unused")
+        Board board = Board.getBoard(args);
+    }
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void fromFileInvalidSize() {
+        String[] args = { "true", "-f", "src/minesweeper/boards/board-invalid-5x4.txt" };
+        @SuppressWarnings("unused")
+        Board board = Board.getBoard(args);
+    }
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void fromFileIllegalNum() {
+        String[] args = { "true", "-f", "src/minesweeper/boards/board-badnum.txt" };
+        @SuppressWarnings("unused")
+        Board board = Board.getBoard(args);
+    }
+    
+    @Test(expected=IllegalArgumentException.class) 
+    public void fromFileIllegalChar() {
+        String[] args = { "true", "-f", "src/minesweeper/boards/board-badchar.txt" };
+        @SuppressWarnings("unused")
+        Board board = Board.getBoard(args);
+    }
+    
     private void assertExpectedBoardState(Board board, State expectedState) {
         for (int i = 0; i < SIZE; i++)
             for (int j = 0; j < SIZE; j++)

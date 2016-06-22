@@ -37,6 +37,7 @@ Implement the DPLL algorithm and use it to solve sudoku puzzles.
 ##### Finding prime factors with networking :heavy_check_mark:
 Make a server to do prime factor searching. Create a client that makes requests to servers it is connected to. The client's connected servers must perform its operations concurrently.
 
-##### Multiplayer minesweeper
+##### Multiplayer minesweeper :heavy_check_mark:
+Implement a server and thread-safe data structure for playing a multiplayer variant of "Minesweeper".
 
 ##### Jotto client GUI
