@@ -40,5 +40,5 @@ Make a server to do prime factor searching. Create a client that makes requests 
 ##### Multiplayer minesweeper :heavy_check_mark:
 Implement a server and thread-safe data structure for playing a multiplayer variant of "Minesweeper".
 
-##### Jotto client GUI
+##### Jotto client GUI :heavy_check_mark:
 Make a simple Jotto playing client that communicates with a server.
