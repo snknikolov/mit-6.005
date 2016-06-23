@@ -41,3 +41,4 @@ Make a server to do prime factor searching. Create a client that makes requests 
 Implement a server and thread-safe data structure for playing a multiplayer variant of "Minesweeper".
 
 ##### Jotto client GUI
+Make a simple Jotto playing client that communicates with a server.
